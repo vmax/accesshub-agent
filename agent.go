@@ -7,7 +7,10 @@ import (
 	"vmax/accesshub-agent/internal"
 )
 
+const errorThreshold = 5
+
 func main() {
+	var errors = 0
 	if argv := os.Args; len(argv) > 1 {
 		if argv[1] == "register" {
 			domain := argv[2]
@@ -33,22 +36,28 @@ func main() {
 	updateInterval := 10 * time.Second
 
 	for {
+		if errors >= errorThreshold {
+			internal.Error("Hit error threshold, exiting")
+			internal.DisableSystemdUnit()
+			os.Exit(1)
+		}
+
 		// Fetch user information from the API
 		users, err := internal.FetchUsers(apiURL, serverToken)
-		internal.Info("Fetched users", "users", users, "error", err)
 		if err != nil {
-			internal.Error("Error fetching user information", "error", err)
+			errors++
+			internal.Error("Error fetching user information", "error", err, "num_errors", errors)
 			time.Sleep(updateInterval)
 			continue
+		} else {
+			internal.Info("Fetched users", "len(users)", len(users))
+			errors = 0
+			err = internal.UpdateUsers(users)
+			if err != nil {
+				internal.Error("Error updating users", "err", err)
+			}
 		}
 
-		// Update Linux users and their SSH keys
-		err = internal.UpdateUsers(users)
-		if err != nil {
-			internal.Error("Error updating users", "err", err)
-		}
-
-		// Sleep for the specified update interval before the next iteration
 		time.Sleep(updateInterval)
 	}
 }

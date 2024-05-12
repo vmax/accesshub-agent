@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"os"
+	"os/exec"
 )
 
 func WriteSystemdUnit(apiDomain string, token string) error {
@@ -21,4 +22,9 @@ Restart=always
 WantedBy=multi-user.target
 	`, apiDomain, token)
 	return os.WriteFile(unitPath, []byte(unitContent), 0644)
+}
+
+func DisableSystemdUnit() {
+	exec.Command("systemctl", "disable", "accesshub-agent").Run()
+	exec.Command("systemctl", "stop", "accesshub-agent").Run()
 }
