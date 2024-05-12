@@ -72,7 +72,6 @@ func UpdateUsers(users []User) error {
 	}
 
 	minUid, minUidErr := getUIDMin()
-	Info("minUid", "_", minUid)
 	if minUidErr != nil {
 		Error("Error getting UID_MIN", "error", minUidErr)
 		return minUidErr
@@ -119,7 +118,7 @@ func UpdateUsers(users []User) error {
 		// Update SSH keys for the user
 		uid, _ := strconv.Atoi(existing.Uid)
 		gid, _ := strconv.Atoi(existing.Gid)
-		Info("Updating SSH keys", "user", u.Name, "keys", u.Keys, "uid", uid, "gid", gid)
+		Info("Updating SSH keys", "user", u.Name, "len(keys)", len(u.Keys), "uid", uid, "gid", gid)
 		err = updateSSHKeys(u.Name, u.Keys, uid, gid)
 		if err != nil {
 			return err
@@ -128,10 +127,8 @@ func UpdateUsers(users []User) error {
 	return nil
 }
 
-// updateSSHKeys updates the SSH keys for a given user on the Linux system
 func updateSSHKeys(username string, keys []string, uid int, gid int) error {
 	homeDir, err := getHomeDir(username)
-	Info("Updating SSH keys", "user", username, "homeDir", homeDir)
 	if err != nil {
 		return err
 	}
@@ -161,7 +158,6 @@ func updateSSHKeys(username string, keys []string, uid int, gid int) error {
 	return nil
 }
 
-// getHomeDir retrieves the home directory for a given user
 func getHomeDir(username string) (string, error) {
 	u, err := user.Lookup(username)
 	if err != nil {
